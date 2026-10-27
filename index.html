@@ -96,10 +96,11 @@ const ncol=()=>Math.max(3,Math.min(D[diff].mx,D[diff].b+Math.floor((stage-1)/D[d
 function run(){const o=$("ov");o.innerHTML="<h2>難易度を選択</h2><p>簡単：目標70%・手数+4・ハンマー+1<br>色は4種類・パイプあり<br><br>普通：標準<br>色は5種類・パイプあり(パイプだけではクリア不可)<br><br>難しい：目標140%・手数-3・ハンマー-1<br>色は7種類・パイプあり<br><br>激ムズ：目標180%・手数-5・ハンマー-1<br>色は8種類・パイプなし</p>";
 Object.keys(D).forEach(k=>{const b=document.createElement("button");b.className="opt";b.innerHTML="<b>"+D[k].n+"</b>";b.onclick=()=>{diff=k;try{localStorage.setItem("sgr_diff",k)}catch(e){}loadBest();go()};o.appendChild(b)});o.style.display="flex"}
 function go(){stage=1;total=0;endless=false;up={move:0,color:0,mult:0,small:0,big:0,hammer:0,tri:0,save:0,head:0,refund:0,hx:0,clean:0,pipe:0};$("ov").style.display="none";start()}
+function tintBg(){const a=Math.min(.04+stage*.012,.22),h=(stage*37)%360;document.body.style.background="radial-gradient(circle at 50% 30%,hsla("+h+",70%,60%,"+a+"),transparent 75%),var(--bg)"}
 function start(){const n=ncol(),pc=Math.floor(Math.random()*n);g=[];for(let y=0;y<H;y++){g.push([]);for(let x=0;x<W;x++)g[y].push(Math.floor(Math.random()*n))}
 score=25*up.head;moves=15+D[diff].mv+3*up.move;hammers=Math.max(0,1+D[diff].hm+up.hammer);for(let k=0;k<8*up.clean;k++){g[Math.floor(Math.random()*H)][Math.floor(Math.random()*W)]=-1}fall();for(let k=0,np=D[diff].pp+up.pipe,tr=0;k<np&&tr<400;tr++){const px=Math.floor(Math.random()*W),py=Math.floor(Math.random()*H);if(g[py][px]>=0&&g[py][px]<10){g[py][px]+=10;k++}}if(stage>=2)for(let tr=0;tr<300;tr++){const px=Math.floor(Math.random()*W),py=Math.floor(Math.random()*H);if(g[py][px]>=0&&g[py][px]<10){g[py][px]=20;break}}
 mis={n:4+Math.floor(Math.random()*4),k:2+Math.floor(Math.random()*2),c:0,done:false};
-sel=[];over=false;hmode=false;const pcs=[...new Set(g.flat().filter(v=>v>=10&&v<20).map(v=>CN[v%10]))];$("msg").textContent=pcs.length?"今回のパイプは"+pcs.join("・")+"（同じ色を全部消せる）":"今回のパイプはなし";draw()}
+sel=[];over=false;hmode=false;const pcs=[...new Set(g.flat().filter(v=>v>=10&&v<20).map(v=>CN[v%10]))];$("msg").textContent=pcs.length?"今回のパイプは"+pcs.join("・")+"（同じ色を全部消せる）":"今回のパイプはなし";tintBg();draw()}
 function group(x,y){const c=g[y][x];if(c<0)return[];const seen=new Set([y*W+x]),st=[[x,y]],out=[];
 while(st.length){const[a,b]=st.pop();out.push([a,b]);[[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy])=>{const nx=a+dx,ny=b+dy;if(nx<0||ny<0||nx>=W||ny>=H)return;const k=ny*W+nx;if(!seen.has(k)&&g[ny][nx]===c){seen.add(k);st.push([nx,ny])}})}
 return out}
