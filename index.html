@@ -107,7 +107,7 @@ return out}
 function pts(n){let p=(n-2)**2;if(n===2)p+=4*up.small;if(n===3)p+=6*up.tri;if(n>=7)p+=15*up.big;return Math.round(p*(1+.25*up.mult))}
 function draw(){const bd=$("board");bd.innerHTML="";const ss=new Set(sel.map(([x,y])=>y*W+x));
 for(let y=0;y<H;y++)for(let x=0;x<W;x++){const d=document.createElement("div");const v=g[y][x];d.className="c"+(v<0?" e":"")+(ss.has(y*W+x)?" sel":"");if(v>=0){d.style.background=v>=20?"#3a3a3c":COLORS[v%10];if(v>=20)d.innerHTML="<i>💣</i>";else if(v>=10)d.innerHTML=PIPE;else d.innerHTML="<i>"+SYM[v]+"</i>";if(dropFx)d.animate([{transform:"translateY(-7px)"},{transform:"translateY(0)"}],{duration:150})}d.onclick=()=>tap(x,y);bd.appendChild(d)}
-dropFx=false;$("st").textContent=stage;$("mv").textContent=moves;$("best").textContent=best;$("dl").textContent="["+D[diff].n+"] ";$("sc").textContent=score;$("tg").textContent=target();
+dropFx=false;$("st").textContent=stage;$("mv").textContent=moves;$("best").textContent=best;$("dl").textContent="["+D[diff].n+"] ";{const sc=$("sc");if(sc.textContent!==String(score)){sc.style.display="inline-block";sc.animate([{transform:"scale(1.45)"},{transform:"scale(1)"}],{duration:260})}sc.textContent=score}$("tg").textContent=target();
 $("pf").style.width=Math.min(100,score/target()*100)+"%";$("hn").textContent=hammers;
 $("hm").disabled=hammers<=0||over;$("hm").className=hmode?"on":"";
 const names={move:"手数",color:"色",mult:"得点",small:"ちび",big:"ドカン",hammer:"ハンマー",tri:"トリオ",save:"貯金",head:"ロケット",refund:"リターン",hx:"ビッグ🔨",clean:"お掃除",pipe:"パイプ"};
