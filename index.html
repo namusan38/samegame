@@ -1,8 +1,4 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="さめがめローグ">
@@ -24,8 +20,8 @@ body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,"Hi
 .row{display:flex;gap:8px;align-items:center;margin:6px 0;font-size:14px;flex-wrap:wrap}
 button{background:var(--btn);color:var(--btnfg);border:0;border-radius:8px;padding:8px 14px;font-size:14px}
 button.on{outline:3px solid #f5c518}
-button:disabled{opacity:.35}
-#board{display:grid;grid-template-columns:repeat(10,1fr);gap:2px;width:100%;aspect-ratio:10/12;background:var(--cell);padding:2px;border-radius:8px}
+button:disabled,button.dim{opacity:.35}
+#board{display:grid;grid-template-columns:repeat(10,1fr);gap:2px;width:100%;aspect-ratio:10/12;background:var(--cell);padding:2px;border-radius:8px;transition:background .3s}
 .c{border-radius:6px;transition:transform .08s;position:relative;min-width:0;min-height:0;overflow:hidden}
 .c.e{visibility:hidden}
 .c svg{position:absolute;inset:0;width:100%;height:100%;display:block;padding:10%}
@@ -33,16 +29,19 @@ button:disabled{opacity:.35}
 #mis{font-size:12px;color:var(--sub);margin:2px 0 6px;min-height:16px}
 .c.sel{transform:scale(.82);outline:2px solid var(--fg)}
 #msg{min-height:22px;margin-top:8px;font-size:13px;color:var(--sub);text-align:center}
+#sp{min-height:40px;margin-top:4px;font-size:13px;line-height:1.5;text-align:center;white-space:pre-line}
+.wrap.hk #board{background:#3a1f24;box-shadow:0 0 0 2px #8b1e2d}
+.wrap.hk #sp{color:#ff8a8a}
+.wrap.pk #board{background:#e9a3c3}
 #rel{font-size:12px;color:var(--sub);min-height:18px}
-#ov{display:none;position:absolute;inset:0;overflow-y:auto;background:rgba(0,0,0,.72);border-radius:8px;padding:14px;flex-direction:column;gap:8px;justify-content:safe center;color:#fff}
+#ov{display:none;position:absolute;inset:0;overflow-y:auto;background:rgba(0,0,0,.72);border-radius:8px;padding:14px;flex-direction:column;gap:8px;justify-content:safe center;color:#fff;z-index:10}
 #ov h2{margin:0 0 4px;font-size:18px;text-align:center}
 #ov p{margin:0 0 4px;font-size:13px;text-align:center;opacity:.85}
 .opt{background:var(--card);color:var(--fg);border-radius:10px;padding:10px 12px;text-align:left}
 #nm{border-radius:8px;border:0;padding:8px;font-size:14px;width:100%}#rk{font-size:13px;background:rgba(255,255,255,.12);border-radius:8px;padding:6px 10px;max-height:170px;overflow:auto}#rk:empty{display:none}#scr{position:relative;flex:1;min-height:320px;overflow:hidden;-webkit-mask-image:linear-gradient(transparent,#000 14%,#000 86%,transparent);mask-image:linear-gradient(transparent,#000 14%,#000 86%,transparent)}#scrt{position:absolute;top:0;left:0;right:0;text-align:center;font-size:17px;line-height:1.9;padding:0 6px;will-change:transform}#scrt div{margin-bottom:1.5em}#rk div{padding:2px 0}#rk .me{color:#f5c518;font-weight:bold}#rk small{opacity:.7;display:block;text-align:center;margin-bottom:2px}
 .opt b{display:block;font-size:15px}.opt span{font-size:12px;color:var(--sub)}
 </style>
-</head>
-<body>
+
 <div class="wrap">
 <div class="top"><span>ステージ <b id="st">1</b></span><span>手数 <b id="mv">0</b></span><span>ベスト <b id="best">1</b></span></div>
 <div class="prog"><div id="pf"></div></div>
@@ -51,6 +50,7 @@ button:disabled{opacity:.35}
 <div id="mis"></div>
 <div id="board"></div>
 <div id="msg"></div>
+<div id="sp"></div>
 <div id="ov"></div>
 </div>
 <script>
@@ -71,6 +71,50 @@ const UPS=[
 {id:"hx",n:"ビッグハンマー",d:"ハンマーが十字(5マス)を消す"},
 {id:"clean",n:"お掃除",d:"各ステージ開始時、ブロックが最大8個消えている"},
 {id:"pipe",n:"パイプ追加",d:"次のステージから、パイプが1個増える(重ねがけ可)"}];
+/* ===== ストーリーモード用データ ===== */
+const S=(w,t)=>w+"「"+t+"」";
+const WC={"マーベリック":"#7fb3ff","香":"#ff9ec4","ライバル":"#c9a0ff"};
+const PRO=[["マーベリック","…雨の降らない街だった。降るのは、ブロックだけだ"],
+["マーベリック","俺の名は、マーベリック・ダンヒル"],
+["マーベリック","元・記憶調律師。虚無に消された星の記憶を拾い集めて、食いつないでいる"],
+["マーベリック","普段は軽口ばかりだが、やる時はやる男だ。…たぶん"],
+["マーベリック","弱点は美女。それと、財布の中身だ"],
+["香","ポエムはいいから働け"]];
+const CH=[
+{t:"第1章 出会い 〜海の星〜",boss:"虚無の影",
+open:[["マーベリック","依頼人は美人だと聞いていた"],["香","どうも。依頼人兼監視役の香だ"],["マーベリック","…聞いてた話と違う"],["香","(ドゴォッ!)100tハンマー!"]],
+pre:[["マーベリック","ここからは、ふざけない"],["香","最初からそうしてろ"]],
+win:[["香","やるじゃん。…ちょっと見直した"],["マーベリック","ちょっと、か。手厳しいな"]]},
+{t:"第2章 共闘 〜森の星〜",boss:"森の蔦",
+open:[["香","手数が足りないなら、これを使え"],["マーベリック","俺に武器を貸すのか?"],["香","あんたが使うのは頭だ。ハンマーは私が振る"]],
+pre:[["マーベリック","香、下がってろ"],["香","…その顔、反則だよ"]],
+win:[["香","やるじゃん。蔦に絡まれた時は笑ったけど"],["マーベリック","見てたのか。助けろよ"]]},
+{t:"第3章 すれ違い 〜街の星〜",boss:"ライバル",
+open:[["","香の記憶が薄れ、名前を呼んでも反応が鈍くなる。"],["香","あれ、私…何でここに?"],["マーベリック","…冗談だよな。笑ってくれ"]],
+pre:[["マーベリック","ふざけるのは、ここまでだ"],["ライバル","その女は、もう俺のものだ"],["マーベリック","…今、何て言った"]],
+win:[["香","やるじゃん。…名前、ちゃんと思い出したよ"],["マーベリック","…ああ。それで十分だ"]]},
+{t:"第4章 決戦 〜虚無の核〜",boss:"虚無の核",
+open:[["","虚無の核。星の記憶が、最後に行き着く場所。"],["マーベリック","…ここまで来たな、香"],["香","当たり前だろ。置いてくわけないじゃん"]],
+pre:[["マーベリック","全部、取り戻す。星も、お前の記憶も"],["香","…バカ。そういうことは、普段から言え"]],
+win:[["香","やるじゃん。…本当に、やるじゃん"],["マーベリック","二度言うな。照れる"]]}];
+const END_N=[["マーベリック","さて、一杯やるか"],["香","奢りだぞ"],["マーベリック","…割り勘で頼む"],["香","(ドゴォッ!)100tハンマー!"]];
+const END_T=[["マーベリック","香。一度しか言わない"],["香","…なんだ"],["マーベリック","お前の隣が、俺の帰る場所だ"],["香","…遅いんだよ、バカ"],["","今日は、ハンマーが振り下ろされなかった。"]];
+const MONO={1:"潮の匂いがする。…あれは香の香水か?",2:"波は寄せては返す。俺の財布もそうだ",3:"海は広い。香のツッコミはもっと広い",4:"静かすぎる。嵐の前の、パンの前だ",
+6:"木漏れ日の下で、香が笑った。…気のせいだろ",7:"森は嘘をつかない。つくのは俺だけだ",8:"迷子になった。香がいれば帰れる気がする",9:"静かな森に、ハンマーの音だけが響いた",
+11:"ネオンが滲む。香の顔が、少し遠く見えた",12:"街の記憶は、誰が持っていくんだ",13:"香が俺の名前を呼ぶ。…今のは、ちゃんと呼んだよな",14:"軽口が出ない夜もある。今夜がそうだ",
+16:"ここから先は、冗談を置いていく",17:"香のハンマーは、もう聞こえない",18:"消えるなら、俺が先だ",19:"あと少しだ。…頼むから、笑っててくれ"};
+const DERE=[S("マーベリック","お嬢さん、この後、星でも見ないか?"),S("マーベリック","いい…実にいい。仕事なんて後回しだ"),S("マーベリック","今夜は月が綺麗だ。…昼だけど"),S("マーベリック","香には内緒で頼むぜ?"),S("マーベリック","俺のハートも、ブロックみたいに消えそうだ"),S("マーベリック","…ふっ、世界は今日も美しい")];
+const HAM=[S("香","100tハンマー!"),S("香","反省しろ!(ドゴォッ)"),S("マーベリック","…今日も重いな、お前のツッコミは"),S("香","デレデレするなって言ってるだろ!"),S("香","次やったら、倍の200tだ"),S("マーベリック","効くぜ…ブロックにも、俺にも"),S("香","手が滑った。…ってことにしておく"),S("マーベリック","愛が重い。物理的に")];
+const BIG=[S("香","まとめて吹っ飛べ!"),S("香","本気の100tだ、受け取れ!")];
+const OOPS=[S("香","あ、ずれた"),S("香","…今の、狙い通りだからな"),S("マーベリック","お前、さっき目をつぶってなかったか?")+"\n"+S("香","しっ、集中してるんだ!")];
+const NOHAM=S("香","もう在庫ないよ。頭使いな")+"\n"+S("マーベリック","…ハンマーは弾切れか。仕方ない、口で戦うか");
+const BQ=S("香","ここは任せる。…頼んだよ")+"\n"+S("マーベリック","香のハンマーは、俺の背中を押してくれる");
+const BEAU=S("香","反省しろ!(ドゴォッ!)")+"\n"+S("マーベリック","…効くぜ。目が覚めた");
+const HK3=S("マーベリック","…残りわずか。ここからは本気だ");
+const LOSE=["ここまでか。…いや、まだ終わりじゃない","負けた夜ほど、酒は苦い。飲めないけどな","ブロックは嘘をつかない。つくのは、いつも俺だ","香、すまない。もう一度だけ、付き合ってくれ","膝をついたのは、立ち上がる角度を測るためだ"];
+const LOSEF="消えていくのは、ブロックだけでいい。…香、まだ行ける";
+const BRULE=["3手ごとに虚無がブロックを飲み込む(🔨で消せる)","4手ごとに蔦が降ってくる","忘却の色は消せない(5手ごとに移る)","虚無・蔦・忘却がすべて襲ってくる"];
+const BBONUS=[2,3,2,4],BMUL=[1,1.1,1.15,1.25];
 const $=id=>document.getElementById(id);
 let AC=null,muted=false;try{muted=localStorage.getItem("sgr_mute")==="1"}catch(e){}
 function sfx(k,n){if(muted)return;try{if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();if(AC.state==="suspended")AC.resume();const t=AC.currentTime;
@@ -85,60 +129,127 @@ else if(k==="thud")tone(90,0,.22,"sine",.45);
 else if(k==="over")[392,330,262,196].forEach((f,i)=>tone(f,i*.18,.25,"sawtooth",.1));
 }catch(e){}}
 let g,stage,score,total=0,moves,hammers,up,sel,over,hmode,best=1;
+let story=false;try{story=localStorage.getItem("sgr_story")==="1"}catch(e){}
+let bcnt=0,bt=0,bpend=false,pen=false,hk3=false,bq=false,spFix=false,fc=-1,spt="",lastSp="",startMoves=0,mcnt=0,acnt=0;
 const PIPE="<svg viewBox='0 0 24 24'><path d='M14 15H9Q5 15 5 19' fill='none' stroke='#222' stroke-width='4.6' stroke-linecap='round'/><path d='M14 15H9Q5 15 5 19' fill='none' stroke='#fff' stroke-width='2.4' stroke-linecap='round'/><path d='M13 6h8v8a4 4 0 0 1-4 4h0a4 4 0 0 1-4-4z' fill='#fff' stroke='#222' stroke-width='1.4'/><path d='M16 4q-1.6-1.6 0-3M19 4q-1.6-1.6 0-3' fill='none' stroke='#fff' stroke-width='1.2' stroke-linecap='round'/></svg>";
 const SYM=["●","◆","▲","■","★","♥","✚","⬟"];
 const D={easy:{n:"簡単",tm:.7,mv:4,b:4,st:99,mx:4,hm:1,pp:1},normal:{n:"普通",tm:1,mv:0,b:5,st:99,mx:5,hm:0,pp:1},hard:{n:"難しい",tm:1.4,mv:-3,b:7,st:99,mx:7,hm:-1,pp:1},extreme:{n:"激ムズ",tm:1.8,mv:-5,b:8,st:99,mx:8,hm:-1,pp:0}};
 let diff="normal";try{const d=localStorage.getItem("sgr_diff");if(d&&D[d])diff=d}catch(e){}
-const bk=()=>diff==="normal"?"sgr_best":"sgr_best_"+diff;
+const bk=()=>(diff==="normal"?"sgr_best":"sgr_best_"+diff)+(story?"_st":"");
 function loadBest(){best=1;try{best=+localStorage.getItem(bk())||1}catch(e){}}
 loadBest();
-const target=()=>Math.round((40+25*stage+6*stage*stage)*D[diff].tm);
+const chap=()=>Math.min(4,Math.ceil(stage/5));
+const isBoss=()=>story&&stage<=20&&stage%5===0;
+const hasB=()=>g.some(r=>r.includes(30));
+const honki=()=>story&&!over&&((stage<=20&&(isBoss()||chap()===4))||moves<=3);
+const pk=a=>{let t;do{t=a[Math.floor(Math.random()*a.length)]}while(a.length>1&&t===lastSp);lastSp=t;return t};
+const target=()=>Math.round((40+25*stage+6*stage*stage)*D[diff].tm*(isBoss()?BMUL[chap()-1]:1));
 const ncol=()=>Math.max(3,Math.min(D[diff].mx,D[diff].b+Math.floor((stage-1)/D[diff].st)-up.color));
-function run(){const o=$("ov");o.innerHTML="<h2>難易度を選択</h2><p>簡単：目標70%・手数+4・ハンマー+1<br>色は4種類・パイプあり<br><br>普通：標準<br>色は5種類・パイプあり(パイプだけではクリア不可)<br><br>難しい：目標140%・手数-3・ハンマー-1<br>色は7種類・パイプあり<br><br>激ムズ：目標180%・手数-5・ハンマー-1<br>色は8種類・パイプなし</p>";
+function run(){const o=$("ov");o.innerHTML="<h2>モード選択</h2><p>ストーリー：マーベリックと香の物語<br>5ステージごとにボス戦、💃美女ブロックも登場<br><br>通常：従来のさめがめローグ</p>";
+[["ストーリーモード","全20ステージ・4章構成・ボス戦あり",true],["通常モード","ストーリーなしのローグライク",false]].forEach(([n,d,s])=>{const b=document.createElement("button");b.className="opt";b.innerHTML="<b>"+n+"</b><span>"+d+"</span>";b.onclick=()=>{story=s;try{localStorage.setItem("sgr_story",s?"1":"0")}catch(e){}diffSel()};o.appendChild(b)});o.style.display="flex"}
+function diffSel(){const o=$("ov");o.innerHTML="<h2>難易度を選択</h2><p>簡単：目標70%・手数+4・ハンマー+1<br>色は4種類・パイプあり"+(story?"・美女なし":"")+"<br><br>普通：標準<br>色は5種類・パイプあり(パイプだけではクリア不可)<br><br>難しい：目標140%・手数-3・ハンマー-1<br>色は7種類・パイプあり<br><br>激ムズ：目標180%・手数-5・ハンマー-1<br>色は8種類・パイプなし</p>";
 Object.keys(D).forEach(k=>{const b=document.createElement("button");b.className="opt";b.innerHTML="<b>"+D[k].n+"</b>";b.onclick=()=>{diff=k;try{localStorage.setItem("sgr_diff",k)}catch(e){}loadBest();go()};o.appendChild(b)});o.style.display="flex"}
-function go(){stage=1;total=0;endless=false;up={move:0,color:0,mult:0,small:0,big:0,hammer:0,tri:0,save:0,head:0,refund:0,hx:0,clean:0,pipe:0};$("ov").style.display="none";start()}
+function go(){stage=1;total=0;endless=false;mcnt=0;acnt=0;up={move:0,color:0,mult:0,small:0,big:0,hammer:0,tri:0,save:0,head:0,refund:0,hx:0,clean:0,pipe:0};$("ov").style.display="none";begin()}
+function scene(title,lines,next){const o=$("ov");o.innerHTML="";
+if(title){const h=document.createElement("h2");h.textContent=title;o.appendChild(h)}
+const bx=document.createElement("div");bx.style.cssText="display:flex;flex-direction:column;gap:10px;margin:6px 0";
+lines.forEach(([w,t],i)=>{const d=document.createElement("div");d.style.cssText="font-size:15px;line-height:1.6;text-align:left;white-space:pre-line";
+if(w){const s=document.createElement("b");s.style.cssText="display:inline;font-size:15px;color:"+(WC[w]||"#fff");s.textContent=w;d.appendChild(s);d.appendChild(document.createTextNode("「"+t+"」"))}else{d.style.opacity=".8";d.style.fontStyle="italic";d.textContent=t}
+try{d.animate([{opacity:0,transform:"translateY(6px)"},{opacity:1,transform:"translateY(0)"}],{duration:450,delay:i*700,fill:"backwards"})}catch(e){}
+bx.appendChild(d)});o.appendChild(bx);
+const b=document.createElement("button");b.className="opt";b.style.textAlign="center";b.innerHTML="<b>次へ</b>";b.onclick=()=>{sfx("sel");next()};o.appendChild(b);o.style.display="flex";o.scrollTop=0}
+function begin(){if(!story||stage>20)return start();
+const c=chap(),steps=[];
+if(stage===1)steps.push(["プロローグ",PRO]);
+if((stage-1)%5===0)steps.push([CH[c-1].t,CH[c-1].open]);
+if(stage%5===0)steps.push(["ボス戦：「"+CH[c-1].boss+"」",CH[c-1].pre]);
+(function nx(i){if(i>=steps.length){$("ov").style.display="none";return start()}scene(steps[i][0],steps[i][1],()=>nx(i+1))})(0)}
 function tintBg(){const a=Math.min(.04+stage*.012,.22),h=(stage*37)%360;document.body.style.background="radial-gradient(circle at 50% 30%,hsla("+h+",70%,60%,"+a+"),transparent 75%),var(--bg)"}
 function start(){const n=ncol(),pc=Math.floor(Math.random()*n);g=[];for(let y=0;y<H;y++){g.push([]);for(let x=0;x<W;x++)g[y].push(Math.floor(Math.random()*n))}
 score=25*up.head;moves=15+D[diff].mv+3*up.move;hammers=Math.max(0,1+D[diff].hm+up.hammer);for(let k=0;k<8*up.clean;k++){g[Math.floor(Math.random()*H)][Math.floor(Math.random()*W)]=-1}fall();for(let k=0,np=D[diff].pp+up.pipe,tr=0;k<np&&tr<400;tr++){const px=Math.floor(Math.random()*W),py=Math.floor(Math.random()*H);if(g[py][px]>=0&&g[py][px]<10){g[py][px]+=10;k++}}if(stage>=2)for(let tr=0;tr<300;tr++){const px=Math.floor(Math.random()*W),py=Math.floor(Math.random()*H);if(g[py][px]>=0&&g[py][px]<10){g[py][px]=20;break}}
 mis={n:4+Math.floor(Math.random()*4),k:2+Math.floor(Math.random()*2),c:0,done:false};
-sel=[];over=false;hmode=false;const pcs=[...new Set(g.flat().filter(v=>v>=10&&v<20).map(v=>CN[v%10]))];$("msg").textContent=pcs.length?"今回のパイプは"+pcs.join("・")+"（同じ色を全部消せる）":"今回のパイプはなし";tintBg();introFx=true;draw();setTimeout(()=>sfx("thud"),780)}
-function group(x,y){const c=g[y][x];if(c<0)return[];const seen=new Set([y*W+x]),st=[[x,y]],out=[];
+bcnt=0;bt=0;bpend=false;pen=false;hk3=false;bq=false;spFix=false;fc=-1;spt="";
+const bs=isBoss();let bty=false;
+if(bs){moves+=BBONUS[chap()-1];hammers+=1;if(chap()>=3)fc=Math.floor(Math.random()*n)}
+else if(story&&diff!=="easy"&&Math.random()<({normal:.33,hard:.5,extreme:1})[diff]){for(let tr=0;tr<300;tr++){const px=Math.floor(Math.random()*W),py=Math.floor(Math.random()*H);if(g[py][px]>=0&&g[py][px]<10){g[py][px]=30;bty=true;hammers+=1;break}}}
+startMoves=moves;
+if(story)spt=bty?pk(DERE):bs?"……(本気モード)":stage>20?"終わらない箱庭。香、まだ付き合ってくれるか?":(MONO[stage]||"");
+sel=[];over=false;hmode=false;
+const pcs=[...new Set(g.flat().filter(v=>v>=10&&v<20).map(v=>CN[v%10]))];
+$("msg").textContent=bty?"💃 美女が現れた！🔨で消すと手数+2／放置すると手数が削られる":bs?"⚔ ボス戦："+BRULE[chap()-1]:(pcs.length?"今回のパイプは"+pcs.join("・")+"（同じ色を全部消せる）":"今回のパイプはなし");tintBg();introFx=true;draw();setTimeout(()=>sfx("thud"),780)}
+function group(x,y){const c=g[y][x];if(c<0||c>=30||(c<10&&c===fc))return[];const seen=new Set([y*W+x]),st=[[x,y]],out=[];
 while(st.length){const[a,b]=st.pop();out.push([a,b]);[[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy])=>{const nx=a+dx,ny=b+dy;if(nx<0||ny<0||nx>=W||ny>=H)return;const k=ny*W+nx;if(!seen.has(k)&&g[ny][nx]===c){seen.add(k);st.push([nx,ny])}})}
 return out}
 function pts(n){let p=(n-2)**2;if(n===2)p+=4*up.small;if(n===3)p+=6*up.tri;if(n>=7)p+=15*up.big;return Math.round(p*(1+.25*up.mult))}
 function draw(){const bd=$("board");bd.innerHTML="";const ss=new Set(sel.map(([x,y])=>y*W+x));
-for(let y=0;y<H;y++)for(let x=0;x<W;x++){const d=document.createElement("div");const v=g[y][x];d.className="c"+(v<0?" e":"")+(ss.has(y*W+x)?" sel":"");if(v>=0){d.style.background=v>=20?"#3a3a3c":COLORS[v%10];if(v>=20)d.innerHTML="<i>💣</i>";else if(v>=10)d.innerHTML=PIPE;else d.innerHTML="<i>"+SYM[v]+"</i>";if(dropFx)d.animate([{transform:"translateY(-7px)"},{transform:"translateY(0)"}],{duration:150});if(introFx)d.animate([{transform:"translateY(-40px) scale(.7)",opacity:0,offset:0},{transform:"translateY(5px) scale(1.06)",opacity:1,offset:.7},{transform:"translateY(-2px) scale(.98)",opacity:1,offset:.88},{transform:"translateY(0) scale(1)",opacity:1,offset:1}],{duration:420,delay:y*35+x*6,fill:"backwards"})}d.onclick=()=>tap(x,y);bd.appendChild(d)}
-dropFx=false;introFx=false;$("st").textContent=stage;$("mv").textContent=moves;$("best").textContent=best;$("dl").textContent="["+D[diff].n+"] ";{const sc=$("sc");if(sc.textContent!==String(score)){sc.style.display="inline-block";sc.animate([{transform:"scale(1.45)"},{transform:"scale(1)"}],{duration:260})}sc.textContent=score}$("tg").textContent=target();
+for(let y=0;y<H;y++)for(let x=0;x<W;x++){const d=document.createElement("div");const v=g[y][x];d.className="c"+(v<0?" e":"")+(ss.has(y*W+x)?" sel":"");if(v>=0){
+if(v===30){d.style.background="#ff8fb8";d.innerHTML="<i>💃</i>"}
+else if(v===40){d.style.background="#2b1a4a";d.innerHTML="<i>🌑</i>"}
+else{d.style.background=v>=20?"#3a3a3c":COLORS[v%10];if(v>=20)d.innerHTML="<i>💣</i>";else if(v>=10)d.innerHTML=PIPE;else if(v===fc){d.style.filter="grayscale(1) brightness(.55)";d.innerHTML="<i>？</i>"}else d.innerHTML="<i>"+SYM[v]+"</i>"}
+if(dropFx)d.animate([{transform:"translateY(-7px)"},{transform:"translateY(0)"}],{duration:150});if(introFx)d.animate([{transform:"translateY(-40px) scale(.7)",opacity:0,offset:0},{transform:"translateY(5px) scale(1.06)",opacity:1,offset:.7},{transform:"translateY(-2px) scale(.98)",opacity:1,offset:.88},{transform:"translateY(0) scale(1)",opacity:1,offset:1}],{duration:420,delay:y*35+x*6,fill:"backwards"})}d.onclick=()=>tap(x,y);bd.appendChild(d)}
+dropFx=false;introFx=false;$("st").textContent=stage;$("mv").textContent=moves;$("best").textContent=best;$("dl").textContent="["+D[diff].n+"] "+(story&&stage<=20?"第"+chap()+"章"+(isBoss()?"⚔":"")+" ":"");{const sc=$("sc");if(sc.textContent!==String(score)){sc.style.display="inline-block";sc.animate([{transform:"scale(1.45)"},{transform:"scale(1)"}],{duration:260})}sc.textContent=score}$("tg").textContent=target();
 $("pf").style.width=Math.min(100,score/target()*100)+"%";$("hn").textContent=hammers;
-$("hm").disabled=hammers<=0||over;$("hm").className=hmode?"on":"";
+$("hm").disabled=over||(!story&&hammers<=0);$("hm").className=(hmode?"on":"")+(story&&hammers<=0?" dim":"");
+const wr=document.querySelector(".wrap");wr.classList.toggle("hk",honki());wr.classList.toggle("pk",story&&!over&&hasB());
+$("sp").textContent=story?spt:"";
 const names={move:"手数",color:"色",mult:"得点",small:"ちび",big:"ドカン",hammer:"ハンマー",tri:"トリオ",save:"貯金",head:"ロケット",refund:"リターン",hx:"ビッグ🔨",clean:"お掃除",pipe:"パイプ"};
 $("rel").textContent=Object.keys(up).filter(k=>up[k]).map(k=>names[k]+"×"+up[k]).join(" ");
 $("mis").textContent=mis.done?"✅ ミッション達成！":"🎯 "+mis.n+"個以上の塊を"+mis.k+"回消す ("+mis.c+"/"+mis.k+") 達成で手数+2"}
 function fall(){for(let x=0;x<W;x++){const col=[];for(let y=H-1;y>=0;y--)if(g[y][x]>=0)col.push(g[y][x]);for(let y=H-1,i=0;y>=0;y--,i++)g[y][x]=i<col.length?col[i]:-1}
 let t=0;for(let x=0;x<W;x++){if(g[H-1][x]>=0){if(t!==x)for(let y=0;y<H;y++){g[y][t]=g[y][x];g[y][x]=-1}t++}}}
-const hasMove=()=>{for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(g[y][x]>=10||(g[y][x]>=0&&group(x,y).length>=2))return true;return false};
+const hasMove=()=>{for(let y=0;y<H;y++)for(let x=0;x<W;x++)if((g[y][x]>=10&&g[y][x]<30)||(g[y][x]>=0&&group(x,y).length>=2))return true;return false};
+/* 手数を1消費。美女がいる間は一定手数ごとに追加で-1、ボス戦は手数カウント */
+function spend(){moves--;pen=false;if(story&&hasB()){bcnt++;if(bcnt>=(diff==="extreme"?2:3)){bcnt=0;moves--;pen=true}}if(isBoss()){bt++;bpend=true}moves=Math.max(0,moves)}
+const pm=()=>pen?" ／ 💃デレデレで手数-1":"";
+function bossTick(){const c=chap(),ev=[];
+const voidOne=()=>{const cs=[];for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(g[y][x]>=0&&g[y][x]<10)cs.push([x,y]);if(cs.length){const[x,y]=cs[Math.floor(Math.random()*cs.length)];g[y][x]=40;ev.push("🌑虚無がブロックを飲み込んだ")}};
+const drop=k=>{const n=ncol(),xs=[...Array(W).keys()].sort(()=>Math.random()-.5).slice(0,k);let add=0;xs.forEach(x=>{let cnt=0;for(let y=0;y<H;y++)if(g[y][x]>=0)cnt++;if(cnt<H){g[H-1-cnt][x]=Math.floor(Math.random()*n);add++}});if(add){fall();dropFx=true;ev.push("🌿蔦が"+add+"個降ってきた")}};
+const shift=()=>{const n=ncol();let nc;do{nc=Math.floor(Math.random()*n)}while(n>1&&nc===fc);fc=nc;ev.push("❓忘却の色が移った")};
+if(c===1){if(bt%3===0)voidOne()}
+else if(c===2){if(bt%4===0)drop(W)}
+else if(c===3){if(bt%5===0)shift()}
+else{if(bt%4===0)voidOne();if(bt%5===0)drop(5);if(bt%6===0)shift()}
+return ev.join(" ／ ")}
 function tap(x,y){bgmOn();if(over||busy||g[y][x]<0)return;
-if(hmode){if(hammers<=0)return;(up.hx?[[0,0],[1,0],[-1,0],[0,1],[0,-1]]:[[0,0]]).forEach(([a,b])=>{const X=x+a,Y=y+b;if(X>=0&&Y>=0&&X<W&&Y<H)g[Y][X]=-1});hammers--;hmode=false;sel=[];sfx("hammer");fall();check();return}
-if(g[y][x]>=20){const bc=[];for(let b=-1;b<=1;b++)for(let a=-1;a<=1;a++){const X=x+a,Y=y+b;if(X>=0&&Y>=0&&X<W&&Y<H&&g[Y][X]>=0)bc.push([X,Y])}
+if(hmode){if(hammers<=0)return;let cx=x,cy=y,oops=false,hitB=false;
+if(story&&g[y][x]!==30&&Math.random()<.1){const nb=[[1,0],[-1,0],[0,1],[0,-1]].map(([a,b])=>[x+a,y+b]).filter(([a,b])=>a>=0&&b>=0&&a<W&&b<H&&g[b][a]>=0);if(nb.length){[cx,cy]=nb[Math.floor(Math.random()*nb.length)];oops=true}}
+(up.hx?[[0,0],[1,0],[-1,0],[0,1],[0,-1]]:[[0,0]]).forEach(([a,b])=>{const X=cx+a,Y=cy+b;if(X>=0&&Y>=0&&X<W&&Y<H){if(g[Y][X]===30)hitB=true;g[Y][X]=-1}});
+hammers--;hmode=false;sel=[];sfx("hammer");
+if(hitB){moves+=2;bcnt=0}
+if(story){spFix=true;spt=hitB?BEAU:oops?pk(OOPS):up.hx?pk(BIG):pk(HAM)}
+$("msg").textContent=hitB?"💃 正気に戻った！手数+2":oops?"🔨 おっと、ずれた！":"🔨 ハンマー";
+fall();check();return}
+if(g[y][x]>=30){sel=[];selPipe=false;sfx("no");draw();$("msg").textContent=g[y][x]===30?"💃 美女は🔨ハンマーでしか消せない":"🌑 虚無は🔨ハンマーでしか消せない";return}
+if(g[y][x]>=20){const bc=[];for(let b=-1;b<=1;b++)for(let a=-1;a<=1;a++){const X=x+a,Y=y+b;if(X>=0&&Y>=0&&X<W&&Y<H&&g[Y][X]>=0&&g[Y][X]<30)bc.push([X,Y])}
 const bp=Math.round(bc.length*4*(1+.25*up.mult));
-if(selPipe==="bomb"&&sel.some(([a,b])=>a===x&&b===y)){burst(bc.map(([a,b])=>[a,b,g[b][a]]),9);bc.forEach(([a,b])=>g[b][a]=-1);score+=bp;moves--;sel=[];selPipe=false;dropFx=true;sfx("pop",14);fall();$("msg").textContent="ボム！ "+bc.length+"個消し +"+bp+"点";check()}
+if(selPipe==="bomb"&&sel.some(([a,b])=>a===x&&b===y)){burst(bc.map(([a,b])=>[a,b,g[b][a]]),9);bc.forEach(([a,b])=>g[b][a]=-1);score+=bp;spend();sel=[];selPipe=false;dropFx=true;sfx("pop",14);fall();$("msg").textContent="ボム！ "+bc.length+"個消し +"+bp+"点"+pm();check()}
 else{sel=bc;selPipe="bomb";sfx("sel");draw();$("msg").textContent="ボム：周囲"+bc.length+"個を消す(+"+bp+"点)"}return}
 if(g[y][x]>=10){const c=g[y][x]%10,all=[];for(let j=0;j<H;j++)for(let i=0;i<W;i++)if(g[j][i]>=0&&g[j][i]<20&&g[j][i]%10===c)all.push([i,j]);
 const pp=Math.min(Math.round(all.length*3*(1+.25*up.mult)),Math.floor(target()*(diff==="normal"?.5:9)));
-if(selPipe==="pipe"&&sel.some(([a,b])=>a===x&&b===y)){burst(all.map(([a,b])=>[a,b,g[b][a]]),all.length);dropFx=true;all.forEach(([a,b])=>g[b][a]=-1);score+=pp;moves--;sel=[];selPipe=false;sfx("pop",12);fall();$("msg").textContent="パイプ！ "+all.length+"個消し +"+pp+"点";check()}
+if(selPipe==="pipe"&&sel.some(([a,b])=>a===x&&b===y)){burst(all.map(([a,b])=>[a,b,g[b][a]]),all.length);dropFx=true;all.forEach(([a,b])=>g[b][a]=-1);score+=pp;spend();sel=[];selPipe=false;sfx("pop",12);fall();$("msg").textContent="パイプ！ "+all.length+"個消し +"+pp+"点"+pm();check()}
 else{sel=all;selPipe="pipe";sfx("sel");draw();$("msg").textContent="パイプ：同じ色"+all.length+"個を消す(+"+pp+"点)"}return}
-const gr=group(x,y);if(gr.length<2){sel=[];sfx("no");draw();return}
-if(!selPipe&&sel.some(([a,b])=>a===x&&b===y)){busy=true;shrink(gr);setTimeout(()=>{busy=false;burst(gr.map(([a,b])=>[a,b,g[b][a]]),gr.length);dropFx=true;gr.forEach(([a,b])=>g[b][a]=-1);const p=pts(gr.length);if(!mis.done&&gr.length>=mis.n&&++mis.c>=mis.k){mis.done=true;moves+=2}score+=p;moves--;if(gr.length>=8)moves+=up.refund;sel=[];sfx("pop",gr.length);fall();if(gr.length>=6)praise(gr.length);$("msg").textContent=gr.length+"個消し +"+p+"点";check()},160)}
+const gr=group(x,y);if(gr.length<2){sel=[];sfx("no");draw();if(g[y][x]===fc)$("msg").textContent="❓ 忘却の色は消せない…(ボム・パイプ・🔨なら消せる)";return}
+if(!selPipe&&sel.some(([a,b])=>a===x&&b===y)){busy=true;shrink(gr);setTimeout(()=>{busy=false;burst(gr.map(([a,b])=>[a,b,g[b][a]]),gr.length);dropFx=true;gr.forEach(([a,b])=>g[b][a]=-1);const p=pts(gr.length);if(!mis.done&&gr.length>=mis.n&&++mis.c>=mis.k){mis.done=true;mcnt++;moves+=2}score+=p;spend();if(gr.length>=8)moves+=up.refund;sel=[];sfx("pop",gr.length);fall();if(gr.length>=6)praise(gr.length);$("msg").textContent=gr.length+"個消し +"+p+"点"+pm();check()},160)}
 else{sel=gr;selPipe=false;sfx("sel");draw();$("msg").textContent=gr.length+"個選択中(+"+pts(gr.length)+"点)"}}
-function check(){draw();
-const ac=g.flat().every(v=>v<0);if(ac)score+=100;if(score>=target()||ac){const lf=g.flat().filter(v=>v>=0).length;if(!ac&&lf<=10)score+=(11-lf)*10;over=true;total+=score+moves*8*up.save;if(stage>=best){best=stage+1;try{localStorage.setItem(bk(),best)}catch(e){}}draw();sfx("clear");sparkle();return(stage===20&&!endless)?ending():pick()}
+function check(){
+if(story&&!spFix&&hasB())spt=pk(DERE);
+spFix=false;
+if(story&&!hk3&&!isBoss()&&chap()<4&&moves>0&&moves<=3){hk3=true;spt=HK3}
+if(isBoss()&&!bq&&moves>0&&moves<=Math.ceil(startMoves/2)){bq=true;spt=BQ}
+let ev="";
+if(bpend){bpend=false;const ac0=g.flat().every(v=>v<0||v===30);if(score<target()&&!ac0&&moves>0)ev=bossTick()}
+draw();if(ev)$("msg").textContent+=" ／ "+ev;
+const ac=g.flat().every(v=>v<0||v===30);if(ac){score+=100;acnt++}if(score>=target()||ac){const lf=g.flat().filter(v=>v>=0&&v!==30).length;if(!ac&&lf<=10)score+=(11-lf)*10;over=true;total+=score+moves*8*up.save;if(stage>=best){best=stage+1;try{localStorage.setItem(bk(),best)}catch(e){}}draw();sfx("clear");sparkle();
+const nx=()=>(stage===20&&!endless)?ending():pick();
+if(isBoss())return scene("ボス撃破！",CH[chap()-1].win,nx);
+return nx()}
 if(moves<=0||(!hasMove()&&hammers<=0)){over=true;draw();return fail(moves<=0?"手数切れ":"消せる塊がなくなった")}}
 let bgmWanted=true,bgmTimer=null,bgmStep=0,bgmNext=0,bgmGain=null,nb=null;
 try{bgmWanted=localStorage.getItem("sgr_bgm")!=="0"}catch(e){}
-const CH=[[110,[0,3,7]],[87.31,[0,4,7]],[130.81,[0,4,7]],[98,[0,4,7]]];
+const CHD=[[110,[0,3,7]],[87.31,[0,4,7]],[130.81,[0,4,7]],[98,[0,4,7]]];
 function bo(type,f,t,d,v,fc){const o=AC.createOscillator(),gn=AC.createGain();o.type=type;o.frequency.value=f;gn.gain.setValueAtTime(v,t);gn.gain.exponentialRampToValueAtTime(.001,t+d);let n=o;if(fc){const fl=AC.createBiquadFilter();fl.type="lowpass";fl.frequency.value=fc;o.connect(fl);n=fl}n.connect(gn);gn.connect(bgmGain);o.start(t);o.stop(t+d+.02)}
 function bn(t,d,v,fc){const s=AC.createBufferSource(),gn=AC.createGain(),fl=AC.createBiquadFilter();s.buffer=nb;fl.type="highpass";fl.frequency.value=fc;gn.gain.setValueAtTime(v,t);gn.gain.exponentialRampToValueAtTime(.001,t+d);s.connect(fl);fl.connect(gn);gn.connect(bgmGain);s.start(t);s.stop(t+d)}
-function bstep(i,t){const s=i%16,[r,ch]=CH[Math.floor(i/16)%4];
+function bstep(i,t){const s=i%16,[r,ch]=CHD[Math.floor(i/16)%4];
 if(s%4===0){const o=AC.createOscillator(),gn=AC.createGain();o.frequency.setValueAtTime(140,t);o.frequency.exponentialRampToValueAtTime(40,t+.12);gn.gain.setValueAtTime(.5,t);gn.gain.exponentialRampToValueAtTime(.001,t+.15);o.connect(gn);gn.connect(bgmGain);o.start(t);o.stop(t+.17)}
 if(s===4||s===12)bn(t,.1,.18,1500);
 if(s%2===1)bn(t,.03,.06,7000);
@@ -171,7 +282,8 @@ if(s===0||s===8){bo("sine",r,t,1.2,.18);kick(t,.15)}
 if(s%2===0){const a=[0,1,2,1,2,1,0,1][(s>>1)%8];bo("sine",mf(r*2,ch[a]),t,.5,.05);bo("sine",mf(r*4,ch[a]),t,.25,.015)}
 const mn=MEL[bar][s];if(mn!==undefined)bo("triangle",mf(r*4,mn),t,.9,.07,2800)}
 const TR=[{n:"ダーク",f:bstep,b:()=>116+Math.min(stage,10)*3},{n:"チップ",f:chip,b:()=>138+Math.min(stage,10)*2},{n:"ローファイ",f:lofi,b:()=>78},{n:"サイバー",f:cyber,b:()=>148},{n:"タイトル",f:titleBgm,b:()=>84}];
-const curTr=()=>titleMode?4:bgmMode<4?bgmMode:[2,1,0,3][Math.min(3,Math.max(0,Math.floor(((stage||1)-1)/3)))];
+/* ストーリーの「本気モード」(ボス戦・第4章・残り手数3以下)では自動BGMがダークに切り替わる */
+const curTr=()=>titleMode?4:(bgmMode===4&&honki())?0:bgmMode<4?bgmMode:[2,1,0,3][Math.min(3,Math.max(0,Math.floor(((stage||1)-1)/3)))];
 const curBpm=()=>(TR[bgmCur]||TR[0]).b();
 function bstep2(i,t){if(i%16===0)bgmCur=curTr();(TR[bgmCur]||TR[0]).f(i,t)}
 function bsched(){if(!AC)return;if(bgmNext<AC.currentTime-.5)bgmNext=AC.currentTime+.05;while(bgmNext<AC.currentTime+.2){bstep2(bgmStep,bgmNext);bgmNext+=60/curBpm()/4;bgmStep++}}
@@ -186,19 +298,19 @@ async function rank(pts,st){
 const nm=($("nm").value||"").trim().slice(0,10)||"名無し";
 try{localStorage.setItem("sgr_name",nm)}catch(e){}
 let L=[];try{L=JSON.parse(localStorage.getItem("sgr_rank")||"[]")}catch(e){}
-const t=Date.now();L.push({n:nm,p:pts,s:st,t,d:diff});L.sort((a,b)=>b.p-a.p);L=L.slice(0,30);
+const t=Date.now(),mk=story?1:0;L.push({n:nm,p:pts,s:st,t,d:diff,m:mk});L.sort((a,b)=>b.p-a.p);L=L.slice(0,30);
 try{localStorage.setItem("sgr_rank",JSON.stringify(L))}catch(e){}
-let rows=L.filter(x=>(x.d||"normal")===diff).map(x=>({n:x.n,p:x.p,s:x.s,me:x.t===t})),title="あなたの記録 TOP5",note="";
+let rows=L.filter(x=>(x.d||"normal")===diff&&(x.m||0)===mk).map(x=>({n:x.n,p:x.p,s:x.s,me:x.t===t})),title="あなたの記録 TOP5",note="";
 if(DB&&UID){try{
 const ref=DB.doc("scores/"+UID),cur=await ref.get(),old=cur.exists?cur.data():null;
-const K={easy:"e",normal:"",hard:"h",extreme:"x"}[diff],fp="p"+K,fs="s"+K,op=old&&typeof old[fp]==="number"?old[fp]:-1;
+const K={easy:"e",normal:"",hard:"h",extreme:"x"}[diff]+(story?"t":""),fp="p"+K,fs="s"+K,op=old&&typeof old[fp]==="number"?old[fp]:-1;
 if(!old||op<pts||old.n!==nm)await ref.set({...(old||{}),n:nm,u:UID,t,[fp]:Math.max(op,pts),[fs]:op>=pts?old[fs]:st});
 const q=await DB.collection("scores").orderBy(fp,"desc").limit(50).get();
 rows=q.docs.map(d=>d.data()).filter(v=>typeof v[fp]==="number").map(v=>({n:String(v.n||""),p:v[fp],s:v[fs],me:v.u===UID}));
 title="みんなのランキング"}catch(e){note="共有ランキングに登録できませんでした(閲覧のみの権限だと書き込めません)"}}
 else note="共有ランキングは使えないため、この端末の記録を表示しています";
 const rk=$("rk");rk.innerHTML="";
-const h=document.createElement("small");h.textContent=title+" ["+D[diff].n+"]";rk.appendChild(h);
+const h=document.createElement("small");h.textContent=title+" ["+D[diff].n+(story?"・ストーリー":"")+"]";rk.appendChild(h);
 const mi=rows.findIndex(r=>r.me);
 rows.forEach((r,i)=>{if(i>=5&&i!==mi)return;const d=document.createElement("div");if(r.me)d.className="me";d.textContent=(i+1)+"位 "+r.n+" — "+r.p+"点 (ステージ"+r.s+")";rk.appendChild(d)});
 if(note){const s=document.createElement("small");s.textContent=note;rk.appendChild(s)}}
@@ -212,13 +324,15 @@ function sparkle(){const w=$("board").parentElement;for(let i=0;i<24;i++){const 
 let busy=false,introFx=false;
 function shrink(cs){const bd=$("board");cs.forEach(([x,y])=>{const el=bd.children[y*W+x];if(el)el.animate([{transform:"scale(1)",opacity:1},{transform:"scale(.2)",opacity:0}],{duration:150,fill:"forwards"})})}
 function praise(n){const w=n>=10?"すごい！":n>=8?"ナイス！":"いいね！";const d=document.createElement("div");d.textContent=w;d.style.cssText="position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);font-size:32px;font-weight:bold;color:#f5c518;text-shadow:0 2px 6px #000;pointer-events:none;z-index:6;white-space:nowrap";$("board").parentElement.appendChild(d);d.animate([{opacity:0,transform:"translate(-50%,-30%) scale(.6)"},{opacity:1,transform:"translate(-50%,-50%) scale(1.1)"},{opacity:0,transform:"translate(-50%,-80%) scale(1)"}],{duration:900}).onfinish=()=>d.remove()}
-function pick(){const o=$("ov");const ch=[...UPS].sort(()=>Math.random()-.5).slice(0,3);let pk=false;
-o.innerHTML="<h2>"+(g.flat().every(v=>v<0)?"全消し！+100点 ":"")+"ステージ"+stage+" クリア！</h2><p>強化を1つ選んでください</p>";
-ch.forEach(u=>{const b=document.createElement("button");b.className="opt";b.innerHTML="<b>"+u.n+"</b><span>"+u.d+"</span>";b.onclick=()=>{if(pk)return;pk=true;sfx("pick");up[u.id]++;b.animate([{transform:"scale(1)",boxShadow:"0 0 0 0 #f5c518"},{transform:"scale(1.06)",boxShadow:"0 0 24px 6px #f5c518"}],{duration:300,fill:"forwards"});setTimeout(()=>{stage++;o.style.display="none";start()},320)};o.appendChild(b)});
+function pick(){const o=$("ov");const ch=[...UPS].sort(()=>Math.random()-.5).slice(0,3);let pkd=false;
+o.innerHTML="<h2>"+(g.flat().every(v=>v<0||v===30)?"全消し！+100点 ":"")+"ステージ"+stage+" クリア！</h2><p>強化を1つ選んでください</p>";
+ch.forEach(u=>{const b=document.createElement("button");b.className="opt";b.innerHTML="<b>"+u.n+"</b><span>"+u.d+"</span>";b.onclick=()=>{if(pkd)return;pkd=true;sfx("pick");up[u.id]++;b.animate([{transform:"scale(1)",boxShadow:"0 0 0 0 #f5c518"},{transform:"scale(1.06)",boxShadow:"0 0 24px 6px #f5c518"}],{duration:300,fill:"forwards"});setTimeout(()=>{stage++;o.style.display="none";begin()},320)};o.appendChild(b)});
 o.style.display="flex"}
-function fail(why){sfx("over");const o=$("ov");const fin=total+score;o.innerHTML="<h2>ゲームオーバー</h2><p>"+why+"<br>["+D[diff].n+"] 到達ステージ "+stage+" ／ 合計スコア <b>"+fin+"</b></p><input id=\"nm\" maxlength=\"10\" placeholder=\"ニックネーム\"><div id=\"rk\"></div>";$("nm").value=myName();const r=document.createElement("button");r.className="opt";r.innerHTML="<b>ランキングに登録</b>";r.onclick=()=>{r.style.display="none";rank(fin,stage)};o.appendChild(r);
+function fail(why){sfx("over");const o=$("ov");const fin=total+score;
+const hl=story?"<p style='font-style:italic;margin:6px 0'>マーベリック「"+((isBoss()&&chap()===4)?LOSEF:pk(LOSE))+"」</p>":"";
+o.innerHTML="<h2>ゲームオーバー</h2><p>"+why+"<br>["+D[diff].n+"] 到達ステージ "+stage+" ／ 合計スコア <b>"+fin+"</b></p>"+hl+"<input id=\"nm\" maxlength=\"10\" placeholder=\"ニックネーム\"><div id=\"rk\"></div>";$("nm").value=myName();const r=document.createElement("button");r.className="opt";r.innerHTML="<b>ランキングに登録</b>";r.onclick=()=>{r.style.display="none";rank(fin,stage)};o.appendChild(r);
 const b=document.createElement("button");b.className="opt";b.innerHTML="<b>もう一度挑戦</b>";b.onclick=run;o.appendChild(b);o.style.display="flex"}
-$("hm").onclick=()=>{if(over||hammers<=0)return;hmode=!hmode;sel=[];$("msg").textContent=hmode?"消したいブロックを1つタップ":"";draw()};
+$("hm").onclick=()=>{if(over)return;if(hammers<=0){if(story){spt=NOHAM;draw()}return}hmode=!hmode;sel=[];$("msg").textContent=hmode?"消したいブロックを1つタップ":"";draw()};
 $("snd").textContent=muted?"🔇":"🔊";
 $("snd").onclick=()=>{muted=!muted;try{localStorage.setItem("sgr_mute",muted?"1":"0")}catch(e){}$("snd").textContent=muted?"🔇":"🔊";if(!muted)sfx("sel")};
 $("bgm").style.opacity=bgmWanted?1:.4;
@@ -226,8 +340,10 @@ $("bgm").onclick=()=>{bgmWanted=!bgmWanted;try{localStorage.setItem("sgr_bgm",bg
 const bl=()=>$("bt").textContent="♪"+(bgmMode<4?TR[bgmMode].n:"自動");
 bl();$("bt").onclick=()=>{bgmMode=(bgmMode+1)%5;try{localStorage.setItem("sgr_bm",bgmMode);localStorage.setItem("sgr_bgm","1")}catch(e){}bl();bgmWanted=true;$("bgm").style.opacity=1;bgmOff();bgmOn()};
 let endless=false,selPipe=false,dropFx=false,mis={n:4,k:2,c:0,done:true};
-function ending(){const o=$("ov"),fin=total;
-o.innerHTML="<h2 style='font-size:22px'>🎉 エンディング 🎉</h2><p style='line-height:1.7'>20ステージを駆け抜けたあなたの前で、最後のブロックが光になって消えた。<br>色の迷宮は静まり返り、出口の扉がゆっくりと開く……<br><b>完全クリア！おめでとう！</b></p><p>["+D[diff].n+"] 合計スコア <b>"+fin+"</b></p><input id='nm' maxlength='10' placeholder='ニックネーム'><div id='rk'></div>";
+function ending(){if(!story)return endUI(false);const tr=mcnt>=12||acnt>=3;scene(tr?"✨ 真エンディング ✨":"エンディング",tr?END_N.slice(0,0).concat(END_T):END_N,()=>endUI(tr))}
+function endUI(tr){const o=$("ov"),fin=total;
+const extra=story?"<p>ミッション達成 <b>"+mcnt+"</b>回 ／ 全消し <b>"+acnt+"</b>回<br>"+(tr?"✨ 真エンディング到達！":"(真エンディング条件：ミッション12回以上 または 全消し3回)")+"</p>":"";
+o.innerHTML="<h2 style='font-size:22px'>🎉 エンディング 🎉</h2><p style='line-height:1.7'>20ステージを駆け抜けたあなたの前で、最後のブロックが光になって消えた。<br>色の迷宮は静まり返り、出口の扉がゆっくりと開く……<br><b>完全クリア！おめでとう！</b></p><p>["+D[diff].n+"] 合計スコア <b>"+fin+"</b></p>"+extra+"<input id='nm' maxlength='10' placeholder='ニックネーム'><div id='rk'></div>";
 $("nm").value=myName();
 const mk=(t,f)=>{const b=document.createElement("button");b.className="opt";b.style.textAlign="center";b.innerHTML="<b>"+t+"</b>";b.onclick=f;o.appendChild(b);return b};
 const r=mk("ランキングに登録",()=>{r.style.display="none";rank(fin,20)});
@@ -246,9 +362,9 @@ sk.onclick=end;
 const H=sc.offsetHeight,h=tx.offsetHeight;
 an=tx.animate([{transform:"translateY("+H+"px)"},{transform:"translateY("+(-h)+"px)"}],{duration:(H+h)/42*1000,easing:"linear",fill:"forwards"});
 an.onfinish=end}
-function title(){const o=$("ov");o.innerHTML="<h2 style=\"font-size:26px\">さめがめローグ</h2><p>同じ色のブロックを消して、目標スコアを目指そう</p><p style=\"text-align:left;line-height:1.7\"><b>【遊び方】</b><br>① 同じ色が2個以上つながった塊をタップで選択<br>② もう一度タップで消去(大きい塊ほど高得点)<br>③ 手数内に目標スコア、または全消しでステージクリア<br>④ クリアごとに強化を1つ選べる<br>🔨 ハンマーは手数を使わず1個だけ消せる<br>【パイプ】絵柄付きのブロックをタップすると、同じ色を全部消せる(激ムズは強化で入手)<br>💣 ボムはタップで周囲3×3を消す(2面から出現)<br>🎯 ミッション達成で手数+2<br>♪ ボタンで音のオン/オフとBGMの切り替え</p><p style='font-size:12px'>♪ 画面を1回タップすると音楽が流れます</p>";
+function title(){const o=$("ov");o.innerHTML="<h2 style=\"font-size:26px\">さめがめローグ</h2><p>同じ色のブロックを消して、目標スコアを目指そう</p><p style=\"text-align:left;line-height:1.7\"><b>【遊び方】</b><br>① 同じ色が2個以上つながった塊をタップで選択<br>② もう一度タップで消去(大きい塊ほど高得点)<br>③ 手数内に目標スコア、または全消しでステージクリア<br>④ クリアごとに強化を1つ選べる<br>🔨 ハンマーは手数を使わず1個だけ消せる<br>【パイプ】絵柄付きのブロックをタップすると、同じ色を全部消せる(激ムズは強化で入手)<br>💣 ボムはタップで周囲3×3を消す(2面から出現)<br>🎯 ミッション達成で手数+2<br>🎬 ストーリーモード：5ステージごとにボス戦。💃美女ブロックは🔨でしか消せず、放置すると手数が削られる<br>♪ ボタンで音のオン/オフとBGMの切り替え</p><p style='font-size:12px'>♪ 画面を1回タップすると音楽が流れます</p>";
 const b=document.createElement("button");b.className="opt";b.style.textAlign="center";b.innerHTML="<b>スタート</b>";b.onclick=()=>{titleMode=false;bgmOff();bgmOn();intro()};o.appendChild(b);o.style.display="flex";titleMode=true;["click","touchend","keydown"].forEach(ev=>document.addEventListener(ev,()=>{if(titleMode){bgmOn();if(AC&&AC.state==="suspended")AC.resume()}}))}
 title();
 </script>
-</body>
-</html>
+
+</body></html>
