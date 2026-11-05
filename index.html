@@ -60,7 +60,8 @@ button:disabled,button.dim{opacity:.35}
 <div id="ov"></div>
 </div>
 <script>
-window.onerror=(m,s,l)=>{const e=document.createElement("div");e.style.cssText="position:fixed;left:0;right:0;bottom:0;background:#c00;color:#fff;font-size:12px;padding:6px;z-index:99";e.textContent="エラー: "+m+" ("+l+")";document.body.appendChild(e)};
+try{window.addEventListener("unhandledrejection",ev=>{ev.preventDefault()})}catch(e){}
+window.onerror=(m,s,l)=>{if(!s&&(m==="Script error."||m==="Script error"))return true;if(!document.body)return true;const e=document.createElement("div");e.style.cssText="position:fixed;left:0;right:0;bottom:0;background:#c00;color:#fff;font-size:12px;padding:6px;z-index:99";e.textContent="エラー: "+m+" ("+l+")";document.body.appendChild(e)};
 const CN=["赤","青","緑","黄","紫","橙","ピンク","水色"];
 const W=10,H=12,COLORS=["#e5484d","#3e8ef7","#30a46c","#f5c518","#9a5bd6","#f08a24","#e85d9e","#22b8cf"];
 const UPS=[
